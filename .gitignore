@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Packet Tracer autosaves/backups and temporary exports
+*.pkt.autosave
+*.pka.autosave
+*.bak
+*.tmp
+~$*
+
+# Sensitive or generated network material
+.env
+*.key
+*.pem
+*.log
+!soc/fixtures/*.log
+configs/**/*secret*
+configs/**/*private*
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
