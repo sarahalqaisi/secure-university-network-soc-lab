@@ -1,121 +1,123 @@
-# Secure University Network with Mini SOC Lab
+# Secure University Network & Mini SOC Lab
 
-## Project Overview
-This project demonstrates the design and security configuration of a segmented university network using Cisco Packet Tracer. The lab simulates a small university environment with multiple departments, isolated VLANs, router-on-a-stick inter-VLAN routing, and ACL-based access control rules.
+**A lab-scale Cisco Packet Tracer campus network demonstrating VLAN segmentation, router-on-a-stick policy enforcement, evidence-backed traffic tests, and offline Cisco syslog triage.**
 
-The purpose of this project is to apply networking and cybersecurity fundamentals in a practical lab that can be presented in a CV, GitHub portfolio, or internship interview.
+[![Static validation](https://github.com/sarahalqaisi/secure-university-network-soc-lab/actions/workflows/validate.yml/badge.svg)](https://github.com/sarahalqaisi/secure-university-network-soc-lab/actions/workflows/validate.yml)
+[![Cisco Packet Tracer](https://img.shields.io/badge/Cisco-Packet%20Tracer-1BA0D7)](https://www.netacad.com/cisco-packet-tracer)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Tools Used
-- Cisco Packet Tracer
-- Cisco IOS CLI
-- VLANs
-- Trunking
-- Router-on-a-stick inter-VLAN routing
-- Extended Access Control Lists (ACLs)
+![Real Packet Tracer topology showing one router, one switch, four user VLAN endpoints, and one university server](screenshots/01-topology.png)
 
-## Network Topology
-The network includes the following devices:
+## Why this matters
 
-| Device | Role |
-|---|---|
-| R1 / Router1 | Inter-VLAN routing and ACL enforcement |
-| SW1 | Layer 2 switch for VLAN segmentation |
-| Admin-PC | Administration department endpoint |
-| Student-PC | Student network endpoint |
-| IT-PC | IT department endpoint |
-| Guest-PC | Guest network endpoint |
-| University-Server | Shared university server |
+Campus networks must separate users with different trust levels and make policy outcomes observable. This project pairs an actual Packet Tracer topology with CLI screenshots, an evidence-derived static baseline, reproducible access-control scenarios, and a small offline log-triage tool. It is an educational simulation—not a production university deployment, full SIEM, or claim of comprehensive attack detection.
 
-![Topology](screenshots/01-topology.png)
+### Verified proof points
 
-## VLAN Design
+- Five non-overlapping `/24` zones (Admin, Students, IT, Guest, Servers) with evidenced switch membership and up/up router subinterfaces.
+- Two ordered inbound extended ACLs with visible match counters and captured allowed/blocked ICMP tests.
+- Four deterministic static tests plus a validator that reports **8 PASS / 8 known hardening WARN / 0 FAIL** against the screenshot-derived baseline.
 
-| VLAN | Name | Subnet | Gateway | Switch Port |
-|---:|---|---|---|---|
-| 10 | Admin | 192.168.10.0/24 | 192.168.10.1 | Fa0/1 |
-| 20 | Students | 192.168.20.0/24 | 192.168.20.1 | Fa0/2 |
-| 30 | IT | 192.168.30.0/24 | 192.168.30.1 | Fa0/3 |
-| 40 | Guest | 192.168.40.0/24 | 192.168.40.1 | Fa0/4 |
-| 50 | Servers | 192.168.50.0/24 | 192.168.50.1 | Fa0/5 |
+## Logical architecture
 
-## Security Policy
-
-The network security policy was implemented using extended ACLs on the router sub-interfaces.
-
-| Source Network | Allowed Access | Blocked Access |
-|---|---|---|
-| Admin | Full internal access | None in this lab |
-| IT | Full internal access | None in this lab |
-| Students | University server only | Admin, IT, and Guest networks |
-| Guest | University server only | Admin, Students, IT, and other server-network hosts |
-
-## ACL Implementation
-
-Two extended ACLs were created:
-
-- `STUDENTS-IN`
-- `GUEST-IN`
-
-The ACLs were applied inbound on the relevant router sub-interfaces:
-
-```bash
-interface GigabitEthernet0/0.20
- ip access-group STUDENTS-IN in
-
-interface GigabitEthernet0/0.40
- ip access-group GUEST-IN in
+```mermaid
+flowchart LR
+    R[Router1<br/>802.1Q subinterfaces<br/>ACL enforcement] --- T[SW1<br/>Fa0/24 trunk]
+    T --> A[VLAN 10<br/>Admin]
+    T --> S[VLAN 20<br/>Students]
+    T --> I[VLAN 30<br/>IT]
+    T --> G[VLAN 40<br/>Guest]
+    T --> V[VLAN 50<br/>University Server]
+    R -. Packet Tracer syslog<br/>integration pending .-> L[Central log endpoint]
+    L -. exported text .-> P[Offline syslog triage]
 ```
 
-## Verification Results
+There is no internet edge or DMZ in the current topology. A DMZ was not forced onto a single internal shared server; public exposure and required service ports would need to exist before that design is justified.
 
-| Test | Expected Result | Actual Result | Status |
-|---|---|---|---|
-| VLAN configuration | Ports assigned to correct VLANs | Correct VLAN assignments shown | Passed |
-| Trunk configuration | Fa0/24 trunking | Fa0/24 trunking with VLANs 10,20,30,40,50 | Passed |
-| Router sub-interfaces | All gateways up/up | All VLAN gateways up/up | Passed |
-| Student to Server | Allowed | Successful ping | Passed |
-| Student to Admin | Blocked | Destination host unreachable | Passed |
-| Student to IT | Blocked | Destination host unreachable | Passed |
-| Guest to Server | Allowed | Successful ping | Passed |
-| Guest to Admin/Students/IT | Blocked | Destination host unreachable | Passed |
+## Security zones
 
-## Key Screenshots
+| VLAN | Zone | Subnet / gateway | EVIDENCED access port | Security intent |
+|---:|---|---|---|---|
+| 10 | Admin | `192.168.10.0/24` / `.1` | Fa0/1 | Sensitive administrative endpoint |
+| 20 | Students | `192.168.20.0/24` / `.1` | Fa0/2 | Restricted user population |
+| 30 | IT | `192.168.30.0/24` / `.1` | Fa0/3 | Technical endpoint; not yet a dedicated management plane |
+| 40 | Guest | `192.168.40.0/24` / `.1` | Fa0/4 | Lowest-trust internal zone |
+| 50 | Servers | `192.168.50.0/24` / `.1` | Fa0/5 | Shared University Server at `192.168.50.10` |
 
-### VLAN Configuration
-![VLAN Configuration](screenshots/02-vlan-configuration.png)
+## Access-control reality
 
-### Trunk Verification
-![Trunk Verification](screenshots/03-trunk-verification.png)
+`STUDENTS-IN` and `GUEST-IN` are applied inbound to VLAN 20 and VLAN 40 respectively. The Guest ACL permits `192.168.50.10`, denies the remaining internal zones/server subnet, then permits other destinations. The Student ACL permits the server and denies Admin, IT, and Guest—but its final permit means **other Server VLAN hosts are not denied**. This is documented as a residual risk rather than described as “server-only.”
 
-### Router Sub-Interfaces
-![Router Sub-Interfaces](screenshots/04-router-subinterfaces.png)
+See the complete [access-control matrix](docs/ACCESS_CONTROL_MATRIX.md).
 
-### ACL Rules
-![ACL Rules](screenshots/05-acl-rules.png)
+## Mini SOC flow
 
-### Students ACL Verification
-![Students ACL Verification](screenshots/06-students-acl-verification.png)
+The repository includes deterministic offline triage for selected Cisco IOS ACL-deny, login-failure, configuration-change, and link-state messages:
 
-### Guest ACL Verification
-![Guest ACL Verification](screenshots/07-guest-acl-verification.png)
+```bash
+python soc/triage_syslog.py soc/fixtures/synthetic-ios-syslog.log
+```
 
-### Student Access Test
-![Student Access Test](screenshots/08-student-access-test.png)
+The fixture is explicitly synthetic. No screenshot currently proves that Packet Tracer devices forward logs to a central collector. See [SOC monitoring](docs/SOC_MONITORING.md) for the manual integration and evidence steps. Mini SOC monitoring is not equivalent to a production SIEM.
 
-### Guest Access Test
-![Guest Access Test](screenshots/09-guest-access-test.png)
+## Reproduce the lab
 
-## What I Learned
-- How to design a segmented network using VLANs.
-- How to configure trunking between a switch and a router.
-- How to implement router-on-a-stick inter-VLAN routing.
-- How to write and apply extended ACLs.
-- How to test security policies using ping results.
-- How to document a cybersecurity/networking lab for a technical portfolio.
+1. Install a Cisco Packet Tracer version capable of opening [`secure-university-network-soc-lab.pkt`](secure-university-network-soc-lab.pkt).
+2. Open the topology; do not overwrite the original until compatibility is confirmed.
+3. Review the [validation plan](docs/VALIDATION.md) and run the listed IOS `show` commands.
+4. Repeat the [incident scenarios](docs/INCIDENT_SCENARIOS.md), capturing fresh counters and screenshots after any configuration change.
+5. Export redacted text configurations using the [configuration export guide](docs/CONFIG_EXPORT_GUIDE.md).
 
-## CV Description
+Packet Tracer is unavailable in the Codex validation environment, so the `.pkt` file was not modified and runtime hardening remains manual.
 
-**Secure University Network with Mini SOC Lab — Cisco Packet Tracer**
-- Designed a segmented university network using VLANs, trunking, router-on-a-stick inter-VLAN routing, and ACL-based access control.
-- Implemented security rules to isolate Students and Guest networks from sensitive internal networks while allowing controlled access to the university server.
-- Verified the configuration through CLI commands and documented allowed/blocked traffic using testing evidence.
+## Static validation
+
+[`configs/evidence-baseline.json`](configs/evidence-baseline.json) transcribes only values visible in repository screenshots. It is not a running-config export and cannot prove the live `.pkt` state.
+
+```bash
+python scripts/validate_configs.py
+python -m unittest discover -s tests -v
+python -m compileall -q scripts soc tests
+```
+
+The validator checks VLAN IDs, subnet overlap, gateways, subinterfaces, required trunk VLANs, ACL order and placement, then reports known hardening warnings. CI performs the same static checks; GitHub Actions does not execute Packet Tracer.
+
+## Current hardening gaps
+
+- Native VLAN 1 remains on the trunk and the observed allow-list is `1-1005`.
+- Unused ports are shown in VLAN 1; shutdown, black-hole VLAN assignment, port security, BPDU Guard, and PortFast are not evidenced.
+- A dedicated management VLAN, SSH-only administration, source-restricted VTY access, and secure lab placeholders are not evidenced.
+- DHCP, DNS, helper addresses, and centralized syslog forwarding are not evidenced.
+- Admin and IT have no evidenced inbound least-privilege policy.
+- The Student ACL is broader than the original “server-only” claim.
+
+These are documented manual Packet Tracer tasks; no unsupported feature is claimed. See the [manual hardening runbook](docs/HARDENING_RUNBOOK.md), [threat model](docs/THREAT_MODEL.md), and [defense-in-depth map](docs/DEFENSE_IN_DEPTH.md).
+
+## Evidence and reports
+
+- [Evidence index with claim boundaries](docs/EVIDENCE_INDEX.md)
+- [Historical Word security testing report](reports/Security_Testing_Report.docx)
+- [Packet Tracer screenshots](screenshots/)
+- [Incident scenarios](docs/INCIDENT_SCENARIOS.md)
+
+The Word report reflects the original test run and contains the same screenshots. Where its “Students server-only” wording conflicts with ACL sequence 50, this README and the access-control matrix use the actual evidenced ACL behavior.
+
+## Repository structure
+
+```text
+configs/                     Screenshot-derived static intent baseline
+docs/                        Access policy, monitoring, scenarios, validation, threats, evidence
+reports/                     Historical Word security testing report
+screenshots/                 Real Packet Tracer topology and CLI/test evidence
+scripts/validate_configs.py  Static intent validator (not a runtime emulator)
+soc/                         Offline Cisco IOS syslog triage and synthetic fixture
+tests/                       Deterministic validator/triage tests
+secure-university-...pkt     Original Packet Tracer project
+```
+
+## Security and limitations
+
+This is a lab-scale simulated environment. It does not establish enterprise production readiness, zero trust, high availability, compliance, complete protocol coverage, or measured security efficacy. ACL results are limited to captured tests and timestamps. Before sharing new exports, remove passwords, keys, SNMP communities, personal metadata, and sensitive banners. See [SECURITY.md](SECURITY.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Licensed under the [MIT License](LICENSE).

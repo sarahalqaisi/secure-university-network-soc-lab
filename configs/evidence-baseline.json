@@ -1,0 +1,50 @@
+{
+  "evidence_scope": "Transcribed from repository screenshots; not a full running-config export",
+  "vlans": [
+    {"id": 10, "name": "Admin", "subnet": "192.168.10.0/24", "gateway": "192.168.10.1", "access_port": "Fa0/1"},
+    {"id": 20, "name": "Students", "subnet": "192.168.20.0/24", "gateway": "192.168.20.1", "access_port": "Fa0/2"},
+    {"id": 30, "name": "IT", "subnet": "192.168.30.0/24", "gateway": "192.168.30.1", "access_port": "Fa0/3"},
+    {"id": 40, "name": "Guest", "subnet": "192.168.40.0/24", "gateway": "192.168.40.1", "access_port": "Fa0/4"},
+    {"id": 50, "name": "Servers", "subnet": "192.168.50.0/24", "gateway": "192.168.50.1", "access_port": "Fa0/5"}
+  ],
+  "trunk": {
+    "interface": "Fa0/24",
+    "encapsulation": "802.1q",
+    "native_vlan": 1,
+    "allowed_vlans_observed": "1-1005",
+    "active_vlans_observed": [1, 10, 20, 30, 40, 50]
+  },
+  "router_subinterfaces": [
+    {"interface": "GigabitEthernet0/0.10", "vlan": 10, "address": "192.168.10.1", "status": "up/up"},
+    {"interface": "GigabitEthernet0/0.20", "vlan": 20, "address": "192.168.20.1", "status": "up/up", "inbound_acl": "STUDENTS-IN"},
+    {"interface": "GigabitEthernet0/0.30", "vlan": 30, "address": "192.168.30.1", "status": "up/up"},
+    {"interface": "GigabitEthernet0/0.40", "vlan": 40, "address": "192.168.40.1", "status": "up/up", "inbound_acl": "GUEST-IN"},
+    {"interface": "GigabitEthernet0/0.50", "vlan": 50, "address": "192.168.50.1", "status": "up/up"}
+  ],
+  "acls": {
+    "STUDENTS-IN": [
+      {"sequence": 10, "action": "permit", "protocol": "ip", "source": "192.168.20.0/24", "destination": "host 192.168.50.10"},
+      {"sequence": 20, "action": "deny", "protocol": "ip", "source": "192.168.20.0/24", "destination": "192.168.10.0/24"},
+      {"sequence": 30, "action": "deny", "protocol": "ip", "source": "192.168.20.0/24", "destination": "192.168.30.0/24"},
+      {"sequence": 40, "action": "deny", "protocol": "ip", "source": "192.168.20.0/24", "destination": "192.168.40.0/24"},
+      {"sequence": 50, "action": "permit", "protocol": "ip", "source": "192.168.20.0/24", "destination": "any"}
+    ],
+    "GUEST-IN": [
+      {"sequence": 10, "action": "permit", "protocol": "ip", "source": "192.168.40.0/24", "destination": "host 192.168.50.10"},
+      {"sequence": 20, "action": "deny", "protocol": "ip", "source": "192.168.40.0/24", "destination": "192.168.10.0/24"},
+      {"sequence": 30, "action": "deny", "protocol": "ip", "source": "192.168.40.0/24", "destination": "192.168.20.0/24"},
+      {"sequence": 40, "action": "deny", "protocol": "ip", "source": "192.168.40.0/24", "destination": "192.168.30.0/24"},
+      {"sequence": 50, "action": "deny", "protocol": "ip", "source": "192.168.40.0/24", "destination": "192.168.50.0/24"},
+      {"sequence": 60, "action": "permit", "protocol": "ip", "source": "192.168.40.0/24", "destination": "any"}
+    ]
+  },
+  "evidence": {
+    "topology": "screenshots/01-topology.png",
+    "vlans": "screenshots/02-vlan-configuration.png",
+    "trunk": "screenshots/03-trunk-verification.png",
+    "subinterfaces": "screenshots/04-router-subinterfaces.png",
+    "acls": "screenshots/05-acl-rules.png",
+    "acl_placement": ["screenshots/06-students-acl-verification.png", "screenshots/07-guest-acl-verification.png"],
+    "traffic_tests": ["screenshots/08-student-access-test.png", "screenshots/09-guest-access-test.png"]
+  }
+}

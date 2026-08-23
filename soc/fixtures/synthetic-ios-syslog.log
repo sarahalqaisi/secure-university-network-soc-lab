@@ -1,0 +1,4 @@
+*Aug 23 12:00:01.001: %SEC-6-IPACCESSLOGP: list STUDENTS-IN denied tcp 192.168.20.10(51514) -> 192.168.10.10(22), 1 packet
+*Aug 23 12:00:10.002: %SEC_LOGIN-4-LOGIN_FAILED: Login failed [user: admin] [Source: 192.168.20.10] [localport: 22] [Reason: Login Authentication Failed]
+*Aug 23 12:01:00.003: %SYS-5-CONFIG_I: Configured from console by console
+*Aug 23 12:02:00.004: %LINK-3-UPDOWN: Interface FastEthernet0/4, changed state to down
