@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/brand/university-network-soc-logo.png" alt="Secure University Network and Mini SOC Lab logo" width="180">
+</p>
+
 # Secure University Network & Mini SOC Lab
 
 **A lab-scale Cisco Packet Tracer campus network demonstrating VLAN segmentation, router-on-a-stick policy enforcement, evidence-backed traffic tests, and offline Cisco syslog triage.**
